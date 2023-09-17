@@ -31,6 +31,8 @@ class HpatchesHomogBenchmark:
 
     def convert_coordinates(self, query_coords, query_to_support, wq, hq, wsup, hsup):
         offset = 0.5  # Hpatches assumes that the center of the top-left pixel is at [0,0] (I think)
+        query_coords = query_coords.cpu()
+        query_to_support = query_to_support.cpu()
         query_coords = (
             np.stack(
                 (

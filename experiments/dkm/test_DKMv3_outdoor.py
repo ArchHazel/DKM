@@ -8,7 +8,7 @@ def test_mega1500(model):
     #model.upsample_res = (968, 1472)
     model.upsample_res = (1152, 1536)
     model.use_soft_mutual_nearest_neighbours = False
-    megaloftr_benchmark = Megadepth1500Benchmark("data/megadepth")
+    megaloftr_benchmark = Megadepth1500Benchmark("/mnt/f/megadepth/dkm/")
     megaloftr_results = []
     megaloftr_results.append(megaloftr_benchmark.benchmark(model))
     json.dump(megaloftr_results, open(f"results/mega1500_{model.name}_1152_1536_upsample_8_4_2_1_again2.json", "w"))

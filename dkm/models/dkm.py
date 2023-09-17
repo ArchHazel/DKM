@@ -721,7 +721,7 @@ class RegressionMatcher(nn.Module):
             dense_certainty = dense_certainty - low_res_certainty
             query_to_support = query_to_support.permute(
                 0, 2, 3, 1
-                )
+                ) # B, H, W, 2
             # Create im1 meshgrid
             query_coords = torch.meshgrid(
                 (
@@ -732,7 +732,7 @@ class RegressionMatcher(nn.Module):
             query_coords = torch.stack((query_coords[1], query_coords[0]))
             query_coords = query_coords[None].expand(b, 2, hs, ws)
             dense_certainty = dense_certainty.sigmoid()  # logits -> probs
-            query_coords = query_coords.permute(0, 2, 3, 1)
+            query_coords = query_coords.permute(0, 2, 3, 1)  # 1, H, W, 2
             if (query_to_support.abs() > 1).any() and True:
                 wrong = (query_to_support.abs() > 1).sum(dim=-1) > 0
                 dense_certainty[wrong[:,None]] = 0
