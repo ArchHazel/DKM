@@ -1,14 +1,16 @@
 import json
+import wandb
+
 
 def test_mega1500(model):
-    from dkm.benchmarks import Megadepth1500Benchmark
+    from dkm.benchmarks import Megadepth1500BenchmarkTestOpt
     model.h_resized = 660
     model.w_resized = 880
     model.upsample_preds = True
     #model.upsample_res = (968, 1472)
     model.upsample_res = (1152, 1536)
     model.use_soft_mutual_nearest_neighbours = False
-    megaloftr_benchmark = Megadepth1500Benchmark("/mnt/f/megadepth/dkm/")
+    megaloftr_benchmark = Megadepth1500BenchmarkTestOpt("/mnt/f/megadepth/dkm/")
     megaloftr_results = []
     megaloftr_results.append(megaloftr_benchmark.benchmark(model))
     json.dump(megaloftr_results, open(f"results/mega1500_{model.name}_1152_1536_upsample_8_4_2_1_again2.json", "w"))
@@ -43,14 +45,14 @@ def test_mega_8_scenes(model):
     json.dump(megaloftr_results, open(f"results/mega_8_scenes_{model.name}_1152_1536_upsample_8_4_2_1.json", "w"))
 
 
-def test_hpatches(model):
+def test_hpatches(model, testopt=False):
     from dkm.benchmarks import (
-    HpatchesHomogBenchmark,
+    HpatchesHomogBenchmarkTestOpt,
     )
     model.h_resized = 540
     model.w_resized = 720
     model.upsample_preds = False
-    homog_benchmark = HpatchesHomogBenchmark("data/hpatches")
+    homog_benchmark = HpatchesHomogBenchmarkTestOpt("data/hpatches")
     homog_results = []
     homog_results.append(homog_benchmark.benchmark(model))
     json.dump(
@@ -74,10 +76,12 @@ def test_st_pauls(model):
 
 
 if __name__ == "__main__":
+    wandb.init(project="finetune_dkm")
+
     from dkm.models.model_zoo import DKMv3_outdoor
     model = DKMv3_outdoor()
-    test_mega1500(model)
+    # test_mega1500(model)
     #test_mega_8_scenes(model)
-    # test_hpatches(model)
+    test_hpatches(model, testopt=True)
     # test_st_paults(model) # TODO: benchmark provided by ECO-TR authors, not sure about uploading.
     

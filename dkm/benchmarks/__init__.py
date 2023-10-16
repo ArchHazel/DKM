@@ -1,4 +1,6 @@
 from .hpatches_sequences_homog_benchmark import HpatchesHomogBenchmark
+from .hpatches_sequences_homog_benchmark_testopt import HpatchesHomogBenchmarkTestOpt
 from .scannet_benchmark import ScanNetBenchmark
 from .megadepth1500_benchmark import Megadepth1500Benchmark
+from .megadepth1500_benchmark_testopt import Megadepth1500BenchmarkTestOpt
 from .megadepth_dense_benchmark import MegadepthDenseBenchmark

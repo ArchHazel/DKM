@@ -642,7 +642,7 @@ class RegressionMatcher(nn.Module):
             for scale, f_scale in feature_pyramid.items()
         }
         dense_corresps = self.decoder(f_q_pyramid, f_s_pyramid, upsample = upsample, **(batch["corresps"] if "corresps" in batch else {}))
-        return dense_corresps
+        return dense_corresps, f_q_pyramid
     
     def to_pixel_coordinates(self, matches, H_A, W_A, H_B, W_B):
         kpts_A, kpts_B = matches[...,:2], matches[...,2:]
@@ -666,6 +666,7 @@ class RegressionMatcher(nn.Module):
         if device is None:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         symmetric = self.symmetric
+        print('sysmetric', symmetric)
         self.train(False)
         with torch.no_grad():
             if not batched:
@@ -690,12 +691,12 @@ class RegressionMatcher(nn.Module):
             finest_scale = 1
             # Run matcher
             if symmetric:
-                dense_corresps  = self.forward_symmetric(batch, batched = True)
+                dense_corresps, f_q_pyramid = self.forward_symmetric(batch, batched = True)
             else:
                 dense_corresps = self.forward(batch, batched = True)
             
             if self.upsample_preds:
-                hs, ws = self.upsample_res
+                hs, ws = self.upsample_res  # 1152, 1536
             low_res_certainty = F.interpolate(
             dense_corresps[16]["dense_certainty"], size=(hs, ws), align_corners=False, mode="bilinear"
             )
@@ -711,11 +712,11 @@ class RegressionMatcher(nn.Module):
                 query, support = query[None].to(device), support[None].to(device)
                 batch = {"query": query, "support": support, "corresps": dense_corresps[finest_scale]}
                 if symmetric:
-                    dense_corresps = self.forward_symmetric(batch, upsample = True, batched=True)
+                    dense_corresps, f_q_pyramid, f_s_pyramid = self.forward_symmetric(batch, upsample = True, batched=True)
                 else:
                     dense_corresps = self.forward(batch, batched = True, upsample=True)
-            query_to_support = dense_corresps[finest_scale]["dense_flow"]
-            dense_certainty = dense_corresps[finest_scale]["dense_certainty"]
+            query_to_support = dense_corresps[finest_scale]["dense_flow"]  # 2, 2, hs, ws
+            dense_certainty = dense_corresps[finest_scale]["dense_certainty"]  # 2, 1, hs, ws
             
             # Get certainty interpolation
             dense_certainty = dense_certainty - low_res_certainty
@@ -750,10 +751,12 @@ class RegressionMatcher(nn.Module):
             if batched:
                 return (
                     warp,
-                    dense_certainty
+                    dense_certainty,
+                    f_q_pyramid
                 )
             else:
                 return (
                     warp[0],
                     dense_certainty[0],
+                    f_q_pyramid, 
                 )
