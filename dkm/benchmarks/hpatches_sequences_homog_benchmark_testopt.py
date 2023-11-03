@@ -87,9 +87,9 @@ class HpatchesHomogBenchmarkTestOpt:
                 )
                 match_num = 100 # 5000
                 good_matches, _ = model.sample(dense_matches, dense_certainty, match_num)
-                # pos_a, pos_b = self.convert_coordinates(
-                #     good_matches[:, :2], good_matches[:, 2:], w1, h1, w2, h2
-                # )
+                pos_a, pos_b = self.convert_coordinates(
+                    good_matches[:, :2], good_matches[:, 2:], w1, h1, w2, h2
+                )
 
                 feat4 = F.interpolate(f_q_pyramid[4], f_q_pyramid[2].shape[-2:], mode="bilinear")
                 feats = torch.cat([feat4, f_q_pyramid[2]], dim=1)

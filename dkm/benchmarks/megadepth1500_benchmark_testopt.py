@@ -42,7 +42,8 @@ class Megadepth1500BenchmarkTestOpt:
                 poses = scene["poses"]
                 im_paths = scene["image_paths"]
                 pair_inds = range(len(pairs))
-                for pairind in tqdm(pair_inds):
+                # for pairind in tqdm(pair_inds):
+                for pairind in pair_inds:
                     idx1, idx2 = pairs[pairind][0]
                     K1 = intrinsics[idx1].copy()
                     T1 = poses[idx1].copy()
@@ -66,9 +67,9 @@ class Megadepth1500BenchmarkTestOpt:
 
                     K1[:2] = K1[:2] * scale1
                     K2[:2] = K2[:2] * scale2
-                    dense_matches, dense_certainty, f_q_pyramid, f_s_pyramid = model.match(im1_path, im2_path)
+                    dense_matches, dense_certainty, f_q_pyramid = model.match(im1_path, im2_path)
                     sparse_matches,_ = model.sample(
-                        dense_matches, dense_certainty, 5000
+                        dense_matches, dense_certainty, 100
                     )
                     kpts1 = sparse_matches[:, :2]
                     kpts1 = (
@@ -109,10 +110,11 @@ class Megadepth1500BenchmarkTestOpt:
                     matches = [cv2.DMatch(i, i, 1) for i in range(len(kpts1_vis))]
                     matched_img = cv2.drawMatches(img1, kpts1_vis, img2, kpts2_vis, matches, None)
                     cv2.imwrite(matched_img_path, matched_img)
+                    print(kpts1_vis)
                     
                     # print(matched_img_path)
-                    
 
+                    tot_e_t_local, tot_e_R_local, tot_e_pose_local = [], [], []
                     for _ in range(5):
                         shuffling = np.random.permutation(np.arange(len(kpts1)))
                         kpts1 = kpts1[shuffling]
@@ -135,9 +137,15 @@ class Megadepth1500BenchmarkTestOpt:
                             print(repr(e))
                             e_t, e_R = 90, 90
                             e_pose = max(e_t, e_R)
-                        tot_e_t.append(e_t)
-                        tot_e_R.append(e_R)
-                        tot_e_pose.append(e_pose)
+                        tot_e_t_local.append(e_t)
+                        tot_e_R_local.append(e_R)
+                        tot_e_pose_local.append(e_pose) 
+
+                    tot_e_t.extend(tot_e_t_local)
+                    tot_e_R.extend(tot_e_R_local)
+                    tot_e_pose.extend(tot_e_pose_local)
+
+                    print(matched_img_path, 'err', np.array(tot_e_t_local).mean(), np.array(tot_e_R_local).mean(), np.array(tot_e_pose_local).mean())
             tot_e_pose = np.array(tot_e_pose)
             thresholds = [5, 10, 20]
             auc = pose_auc(tot_e_pose, thresholds)

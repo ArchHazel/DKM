@@ -73,7 +73,7 @@ class HpatchesHomogBenchmark:
                 H = np.loadtxt(
                     os.path.join(self.seqs_path, seq_name, "H_1_" + str(im_idx))
                 )
-                dense_matches, dense_certainty = model.match(
+                dense_matches, dense_certainty, f_q_pyramid = model.match(
                     im1_path, im2_path
                 )
                 good_matches, _ = model.sample(dense_matches, dense_certainty, 5000)

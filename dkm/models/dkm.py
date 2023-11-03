@@ -348,7 +348,7 @@ class GP(nn.Module):
         b, d, h2, w2 = f.shape
         #assert x.shape == y.shape
         x, y, f = self.reshape(x), self.reshape(y), self.reshape(f)
-        K_xx = self.K(x, x)
+        K_xx = self.K(x, x)  # size: bs x hw x hw
         K_yy = self.K(y, y)
         K_xy = self.K(x, y)
         K_yx = K_xy.permute(0, 2, 1)
@@ -463,10 +463,10 @@ class Decoder(nn.Module):
         coarsest_scale = int(all_scales[0])
         old_stuff = torch.zeros(
             b, self.embedding_decoder.internal_dim, *sizes[coarsest_scale], device=f1[coarsest_scale].device
-        )
+        )  # bs, 384, 17, 23
         dense_corresps = {}
         if not upsample:
-            dense_flow = self.get_placeholder_flow(b, *sizes[coarsest_scale], device)
+            dense_flow = self.get_placeholder_flow(b, *sizes[coarsest_scale], device)  # \mu, warping map, size: bs x 2 x 17 x 23
             dense_certainty = 0.0
         else:
             dense_flow = F.interpolate(
@@ -666,7 +666,7 @@ class RegressionMatcher(nn.Module):
         if device is None:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         symmetric = self.symmetric
-        print('sysmetric', symmetric)
+        # print('sysmetric', symmetric)
         self.train(False)
         with torch.no_grad():
             if not batched:
@@ -712,7 +712,7 @@ class RegressionMatcher(nn.Module):
                 query, support = query[None].to(device), support[None].to(device)
                 batch = {"query": query, "support": support, "corresps": dense_corresps[finest_scale]}
                 if symmetric:
-                    dense_corresps, f_q_pyramid, f_s_pyramid = self.forward_symmetric(batch, upsample = True, batched=True)
+                    dense_corresps, f_q_pyramid = self.forward_symmetric(batch, upsample = True, batched=True)
                 else:
                     dense_corresps = self.forward(batch, batched = True, upsample=True)
             query_to_support = dense_corresps[finest_scale]["dense_flow"]  # 2, 2, hs, ws
@@ -751,12 +751,10 @@ class RegressionMatcher(nn.Module):
             if batched:
                 return (
                     warp,
-                    dense_certainty,
-                    f_q_pyramid
+                    dense_certainty
                 )
             else:
                 return (
                     warp[0],
-                    dense_certainty[0],
-                    f_q_pyramid, 
+                    dense_certainty[0]
                 )

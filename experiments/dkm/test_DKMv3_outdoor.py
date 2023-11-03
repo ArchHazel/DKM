@@ -3,18 +3,34 @@ import wandb
 
 
 def test_mega1500(model):
-    from dkm.benchmarks import Megadepth1500BenchmarkTestOpt
+    # from dkm.benchmarks import Megadepth1500BenchmarkTestOpt
+    from dkm.benchmarks import Megadepth1500BenchmarkTestSPEC
     model.h_resized = 660
     model.w_resized = 880
     model.upsample_preds = True
     #model.upsample_res = (968, 1472)
     model.upsample_res = (1152, 1536)
     model.use_soft_mutual_nearest_neighbours = False
-    megaloftr_benchmark = Megadepth1500BenchmarkTestOpt("/mnt/f/megadepth/dkm/")
+    # megaloftr_benchmark = Megadepth1500BenchmarkTestOpt("/mnt/c/Users/ivc-lab-5/Desktop/train-data/megadepth_indices/scene_info_val_1500")
+    megaloftr_benchmark = Megadepth1500BenchmarkTestSPEC("/mnt/c/Users/ivc-lab-5/Desktop/train-data/megadepth_indices/scene_info_val_1500")
     megaloftr_results = []
     megaloftr_results.append(megaloftr_benchmark.benchmark(model))
     json.dump(megaloftr_results, open(f"results/mega1500_{model.name}_1152_1536_upsample_8_4_2_1_again2.json", "w"))
 
+def get_mega1500_accuracy(model):
+    # from dkm.benchmarks import Megadepth1500BenchmarkTestOpt
+    from dkm.benchmarks import Megadepth1500BenchmarkTestSPEC
+    model.h_resized = 660
+    model.w_resized = 880
+    model.upsample_preds = True
+    #model.upsample_res = (968, 1472)
+    model.upsample_res = (1152, 1536)
+    model.use_soft_mutual_nearest_neighbours = False
+    # megaloftr_benchmark = Megadepth1500BenchmarkTestOpt("/mnt/c/Users/ivc-lab-5/Desktop/train-data/megadepth_indices/scene_info_val_1500")
+    megaloftr_benchmark = Megadepth1500BenchmarkTestSPEC("/mnt/c/Users/ivc-lab-5/Desktop/train-data/megadepth_indices/scene_info_val_1500")
+    megaloftr_results = []
+    megaloftr_results.append(megaloftr_benchmark.benchmark(model))
+    return megaloftr_results
 
 def test_mega_8_scenes(model):
     from dkm.benchmarks import Megadepth1500Benchmark
@@ -47,12 +63,13 @@ def test_mega_8_scenes(model):
 
 def test_hpatches(model, testopt=False):
     from dkm.benchmarks import (
-    HpatchesHomogBenchmarkTestOpt,
+    HpatchesHomogBenchmarkTestOpt, HpatchesHomogBenchmark
     )
     model.h_resized = 540
     model.w_resized = 720
     model.upsample_preds = False
     homog_benchmark = HpatchesHomogBenchmarkTestOpt("data/hpatches")
+    # homog_benchmark = HpatchesHomogBenchmark("data/hpatches")
     homog_results = []
     homog_results.append(homog_benchmark.benchmark(model))
     json.dump(
@@ -80,8 +97,9 @@ if __name__ == "__main__":
 
     from dkm.models.model_zoo import DKMv3_outdoor
     model = DKMv3_outdoor()
-    # test_mega1500(model)
-    #test_mega_8_scenes(model)
-    test_hpatches(model, testopt=True)
+    test_mega1500(model)
+    # get_mega1500_accuracy(model)
+    # test_mega_8_scenes(model)
+    # test_hpatches(model, testopt=True)
     # test_st_paults(model) # TODO: benchmark provided by ECO-TR authors, not sure about uploading.
     

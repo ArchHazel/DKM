@@ -158,7 +158,7 @@ def get_model(pretrained_backbone=True, resolution = "low", **kwargs):
     elif resolution == "high":
         h, w = 480, 640
     elif resolution == "higher":
-        h, w = 540, 720
+        h, w = 540, 720 # for outdoor
     elif resolution == "highest":
         h, w = 600, 800
     elif resolution == "highester":
@@ -179,13 +179,15 @@ def train(args):
     wandb.watch(model)
     # Num steps
     n0 = 0
-    batch_size = gpus * 8
+    batch_size = gpus * 2
     N = (32 * 250000) // batch_size  # 250k steps of batch size 32
     # checkpoint every
     k = 150000 // batch_size
 
     # Data
-    mega = MegadepthBuilder(data_root="data/megadepth", loftr_ignore=True, imc21_ignore = True)
+    # mega = MegadepthBuilder(data_root="/mnt/c/Users/ivc-lab-5/Desktop/train-data/megadepth_indices/scene_info_val_1500", loftr_ignore=True, imc21_ignore = True)
+    mega = MegadepthBuilder(data_root="/mnt/c/Users/ivc-lab-5/Desktop/train-data/megadepth_indices/scene_info_val_1500")
+    
     megadepth_train1 = mega.build_scenes(
         split="train_loftr", min_overlap=0.01, ht=h, wt=w, shake_t=32
     )
@@ -205,7 +207,7 @@ def train(args):
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
         optimizer, milestones=[(2*N) // 3, (9 * N) // 10], gamma=0.2
     )
-    megadense_benchmark = MegadepthDenseBenchmark("data/megadepth", h=h, w=w, num_samples=4000)
+    megadense_benchmark = MegadepthDenseBenchmark("/mnt/c/Users/ivc-lab-5/Desktop/train-data/megadepth_indices/scene_info_val_1500", h=h, w=w, num_samples=4000)
     checkpointer = CheckPoint(checkpoint_dir, experiment_name)
     checkpoint_name = checkpoint_dir + experiment_name + "_latest.pth"
     states = {}

@@ -4,6 +4,7 @@ from .utils import (
     compute_relative_pose,
     compute_pose_error,
     estimate_pose,
+    Kinv,
     rotate_intrinsic,
     get_tuple_transform_ops,
     get_depth_tuple_transform_ops,

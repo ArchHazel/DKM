@@ -10,7 +10,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Code taken from https://github.com/PruneTruong/DenseMatching/blob/40c29a6b5c35e86b9509e65ab0cd12553d998e5f/validation/utils_pose_estimation.py
 # --- GEOMETRY ---
-def estimate_pose(kpts0, kpts1, K0, K1, norm_thresh, conf=0.99999):
+def estimate_pose(kpts0, kpts1, K0, K1, norm_thresh, conf=0.99999, method=cv2.RANSAC):
     if len(kpts0) < 5:
         return None
     K0inv = np.linalg.inv(K0[:2,:2])
@@ -20,19 +20,31 @@ def estimate_pose(kpts0, kpts1, K0, K1, norm_thresh, conf=0.99999):
     kpts1 = (K1inv @ (kpts1-K1[None,:2,2]).T).T
 
     E, mask = cv2.findEssentialMat(
-        kpts0, kpts1, np.eye(3), threshold=norm_thresh, prob=conf, method=cv2.RANSAC
+        kpts0, kpts1, np.eye(3), threshold=norm_thresh, prob=conf, method=method
     )
-
+    print(mask.nonzero()[0].shape)
+    # print(repr(E),"OK: can find essentialMat")
     ret = None
+    
     if E is not None:
         best_num_inliers = 0
 
         for _E in np.split(E, len(E) / 3):
-            n, R, t, _ = cv2.recoverPose(_E, kpts0, kpts1, np.eye(3), 1e9, mask=mask)
+            n, R, t, _ = cv2.recoverPose(_E, kpts0, kpts1, np.eye(3), 1e7, mask=mask)
+            # print(n,R,t)
+            # n is 0
+            # impose n large than 0
+            n = 10
             if n > best_num_inliers:
                 best_num_inliers = n
                 ret = (R, t, mask.ravel() > 0)
+                print("n",n)
     return ret
+
+def Kinv(kpts0, K0):
+    K0inv = np.linalg.inv(K0[:2,:2])
+    kpts0 = (K0inv @ (kpts0-K0[None,:2,2]).T).T 
+    return kpts0
 
 
 def rotate_intrinsic(K, n):

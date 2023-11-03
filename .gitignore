@@ -6,3 +6,7 @@ assets/
 demo/
 results/
 wandb/
+
+exp_dir/
+kptlocation.npy
+workspace/
