@@ -3,19 +3,28 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import copy
+import pickle
 from pathlib import Path
 import os
 import torch
 import time
 from pathlib import Path
 from tqdm import tqdm
+import argparse
+
+
+parser = argparse.ArgumentParser('SAM')
+parser.add_argument('--gpu', type=int, default=0, help='gpu index')
+parser.add_argument('--scene-indices', type=str, required=True, help='Path to indices file.')
+args = parser.parse_args()
+
 
 # pre-trained weights of mobileSAM
 weights_path = Path("weights")
 
 sam_checkpoint = weights_path/"mobile_sam.pt"
 model_type = "vit_t"
-device = "cuda" 
+device = f"cuda:{args.gpu}" 
 sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
 sam.to(device=device)
 sam.eval()
@@ -56,10 +65,12 @@ def save_anns_matrix(anns):
 
 
 megadepth_indices_train = Path("data/Megadepth/train-data/megadepth_indices/prep_scene_info")
-sceneInfoFile = os.listdir(megadepth_indices_train)
+# sceneInfoFile = os.listdir(megadepth_indices_train)
+with open(args.scene_indices, 'rb') as f:
+    sceneInfoFile = pickle.load(f)
+
 megadepth_image_path = Path("data/Megadepth/phoenix/S6/zl548")
 megadepth_masks_path = Path("data/Megadepth/masks")
-
 
 
 
@@ -75,11 +86,11 @@ for  f in sceneInfoFile:
         im = cv2.imread(str(megadepth_image_path / p))
         # change color channel from RGB to BGR
         im = cv2.cvtColor(im,cv2.COLOR_RGB2BGR)
-        im = cv2.resize(im, None, None, fx=0.7, fy=0.7, interpolation=cv2.INTER_CUBIC)
+        im = cv2.resize(im, None, None, fx=0.5, fy=0.5, interpolation=cv2.INTER_CUBIC)
 
         # init im_Mask with the same size as the original image
         im_Mask = np.zeros(im.shape[:2], dtype=np.uint16)
-        print(im_Mask.shape)
+        # print(im_Mask.shape)
 
         masks = mask_generator_2.generate(im)
 
@@ -87,12 +98,15 @@ for  f in sceneInfoFile:
         sorted_masks = sorted(masks,key = (lambda x:x["area"]),reverse = True)
 
         for id, mask in enumerate(sorted_masks):
+
+            if mask['area'] < 900:
+                break
+
             m = mask["segmentation"]
             im_Mask[m] = id + 1
 
-        cv2.imwrite(str(megadepth_masks_path/os.path.basename(p)),im_Mask)
-        break
-    break
+        # cv2.imwrite(str(megadepth_masks_path/os.path.basename(p)),im_Mask)
+        np.save(str(megadepth_masks_path/os.path.basename(p).replace('png', 'npy')),im_Mask)
 
 
 
