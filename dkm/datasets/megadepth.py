@@ -1,6 +1,7 @@
 import os
 import random
 from PIL import Image
+from pathlib import Path 
 import h5py
 import numpy as np
 import torch
@@ -91,6 +92,7 @@ class MegadepthScene:
         # Load positive pair data
         im1, im2 = self.image_paths[idx1], self.image_paths[idx2]
         depth1, depth2 = self.depth_paths[idx1], self.depth_paths[idx2]
+        depth1, depth2 = depth1.replace("phoenix/S6/zl548/", ""), depth2.replace("phoenix/S6/zl548/", "")
         im_src_ref = os.path.join(self.data_root, im1)
         im_pos_ref = os.path.join(self.data_root, im2)
         depth_src_ref = os.path.join(self.data_root, depth1)
@@ -136,7 +138,8 @@ class MegadepthScene:
 class MegadepthBuilder:
     def __init__(self, data_root="data/megadepth") -> None:
         self.data_root = data_root
-        self.scene_info_root = os.path.join(data_root, "prep_scene_info")
+        # self.scene_info_root = os.path.join(data_root, "prep_scene_info")
+        self.scene_info_root = Path("data/Megadepth/train-data/megadepth_indices/prep_scene_info")
         self.all_scenes = os.listdir(self.scene_info_root)
         self.test_scenes = ["0017.npy", "0004.npy", "0048.npy", "0013.npy"]
         self.test_scenes_loftr = ["0015.npy", "0022.npy"]
@@ -157,6 +160,7 @@ class MegadepthBuilder:
             scene_info = np.load(
                 os.path.join(self.scene_info_root, scene_name), allow_pickle=True
             ).item()
+            # print(scene_info)
             scenes.append(
                 MegadepthScene(
                     self.data_root, scene_info, min_overlap=min_overlap, **kwargs
